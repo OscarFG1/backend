@@ -52,9 +52,6 @@ def ping_pong():
                     f"━━━━━━━━━━━━━\n\n"
                     f"`⚡ Servidor Flask iniciado\n`"
                     f"`💬 Bot Telegram activo y listo\n`"
-                    f"`📌 Dominio: {window.location.origin}\n`"
-                    f"**Presiona 'Iniciar suscripción' para recibir tus CC**\n\n"
-                    f"_Recibiendo datos en tiempo real..._"
                 ), 
                 "parse_mode": "Markdown"
             }, timeout=5)
